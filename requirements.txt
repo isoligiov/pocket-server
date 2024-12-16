@@ -1,0 +1,3 @@
+scapy
+websocket-client
+rel

@@ -11,8 +11,7 @@ websocket_server_url = "wss://streamlineanalytics.net:10001"  # Replace with you
 # WebSocket initialization
 def send_websocket_message(data):
     try:
-        message = json.dumps({"data": data})
-        ws.send(message)
+        ws.send(data)
         print(f"Sent data to WebSocket server: {data}")
     except Exception as e:
         print(f"Failed to send data via WebSocket: {e}")

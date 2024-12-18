@@ -22,7 +22,7 @@ def process_packet(packet):
     if ARP in packet and packet[ARP].op == 1:  # ARP request
         # Extract extra payload data
         arppayload = bytes(packet[ARP])[28:]  # Start after standard ARP payload
-        if arppayload[0] != CHANNEL_ID:
+        if len(arppayload) == 0 or arppayload[0] != CHANNEL_ID:
             return
         extra_data = arppayload[1:].decode('utf-8', errors='ignore').strip('\x00')
         if extra_data:

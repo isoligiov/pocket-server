@@ -1,8 +1,9 @@
 from scapy.all import sniff, ARP
 import websocket
-import json
 import ssl
 import rel
+
+CHANNEL_ID = 149
 
 # WebSocket server address
 ws = None
@@ -21,7 +22,9 @@ def process_packet(packet):
     if ARP in packet and packet[ARP].op == 1:  # ARP request
         # Extract extra payload data
         arppayload = bytes(packet[ARP])[28:]  # Start after standard ARP payload
-        extra_data = arppayload.decode('utf-8', errors='ignore').strip('\x00')
+        if arppayload[0] != CHANNEL_ID:
+            return
+        extra_data = arppayload[1:].decode('utf-8', errors='ignore').strip('\x00')
         if extra_data:
             print(f"Extracted extra data: {extra_data}")
             send_websocket_message(extra_data)

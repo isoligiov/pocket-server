@@ -25,6 +25,7 @@ def process_packet(packet):
         if len(arppayload) == 0 or arppayload[0] != CHANNEL_ID:
             return
         extra_data = arppayload[1:].decode('utf-8', errors='ignore').strip('\x00')
+        print(extra_data)
         if extra_data:
             print(f"Extracted extra data: {extra_data}")
             send_websocket_message(extra_data)

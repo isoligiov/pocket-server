@@ -15,7 +15,6 @@ def send_websocket_message(data):
     global ws
     try:
         ws.send(data)
-        print(f"Sent data to WebSocket server: {data}")
     except Exception as e:
         print(f"Failed to send data via WebSocket: {e}")
 
@@ -27,9 +26,8 @@ def process_packet(packet):
         if len(arppayload) == 0 or arppayload[0] != CHANNEL_ID:
             return
         extra_data = arppayload[1:].decode('utf-8', errors='ignore').strip('\x00')
-        print(extra_data)
         if extra_data:
-            print(f"Extracted extra data: {extra_data}")
+            print(extra_data)
             send_websocket_message(extra_data)
 
 def on_error(ws, error):
@@ -44,7 +42,7 @@ def on_close(ws, close_status_code, close_msg):
 
 def reconnect():
     global ws
-    ws = websocket.WebSocketApp(f"wss://streamlineanalytics.net:10010",
+    ws = websocket.WebSocketApp(websocket_server_url,
                               on_error=on_error,
                               on_close=on_close)
 

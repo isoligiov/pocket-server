@@ -12,6 +12,7 @@ websocket_server_url = "wss://streamlineanalytics.net:10001"  # Replace with you
 
 # WebSocket initialization
 def send_websocket_message(data):
+    global ws
     try:
         ws.send(data)
         print(f"Sent data to WebSocket server: {data}")
@@ -42,6 +43,7 @@ def on_close(ws, close_status_code, close_msg):
     reconnect()
 
 def reconnect():
+    global ws
     ws = websocket.WebSocketApp(f"wss://streamlineanalytics.net:10010",
                               on_error=on_error,
                               on_close=on_close)

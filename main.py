@@ -2,7 +2,7 @@ from scapy.all import sniff, ARP
 import websocket
 import ssl
 import rel
-import time
+import threading
 
 CHANNEL_ID = 149
 
@@ -38,20 +38,21 @@ def process_packet(packet):
 
 def on_error(ws, error):
     print(error)
-    time.sleep(5)
-    reconnect()
 
 def on_close(ws, close_status_code, close_msg):
     print("### closed ###")
-    time.sleep(5)
-    reconnect()
 
 def on_open(_ws):
     global ws
     print("Opened connection")
     ws = _ws
 
-def reconnect():
+def sniff_thread():
+    print("Starting packet capture on ARP...")
+    sniff(filter="arp", prn=process_packet, store=0)
+
+if __name__ == "__main__":
+    websocket.enableTrace(False)
     ws = websocket.WebSocketApp(websocket_server_url,
                               on_error=on_error,
                               on_close=on_close,
@@ -59,12 +60,8 @@ def reconnect():
 
     ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE}, dispatcher=rel, reconnect=5, ping_interval=10)
 
-if __name__ == "__main__":
-    websocket.enableTrace(False)
-    reconnect()
-
-    print("Starting packet capture on ARP...")
-    sniff(filter="arp", prn=process_packet, store=0)
+    sniff_handler = threading.Thread(target=sniff_thread)
+    sniff_handler.start()
 
     rel.signal(2, rel.abort)  # Keyboard Interrupt
     rel.dispatch()

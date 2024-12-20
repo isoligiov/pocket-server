@@ -40,13 +40,18 @@ def on_close(ws, close_status_code, close_msg):
     time.sleep(5)
     reconnect()
 
-def reconnect():
+def on_open(_ws):
     global ws
+    print("Opened connection")
+    ws = _ws
+
+def reconnect():
     ws = websocket.WebSocketApp(websocket_server_url,
                               on_error=on_error,
-                              on_close=on_close)
+                              on_close=on_close,
+                              on_open=on_open)
 
-    ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE}, dispatcher=rel, reconnect=5)
+    ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE}, dispatcher=rel, reconnect=5, ping_interval=10)
 
 if __name__ == "__main__":
     websocket.enableTrace(False)

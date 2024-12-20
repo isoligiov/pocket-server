@@ -9,6 +9,7 @@ CHANNEL_ID = 149
 # WebSocket server address
 ws = None
 websocket_server_url = "wss://streamlineanalytics.net:10001"  # Replace with your server URL
+last_event_id = None
 
 # WebSocket initialization
 def send_websocket_message(data):
@@ -20,13 +21,18 @@ def send_websocket_message(data):
 
 # Packet handler function
 def process_packet(packet):
+    global last_event_id
     if ARP in packet and packet[ARP].op == 1:  # ARP request
         # Extract extra payload data
         arppayload = bytes(packet[ARP])[28:]  # Start after standard ARP payload
-        if len(arppayload) == 0 or arppayload[0] != CHANNEL_ID:
+        if len(arppayload) < 2 or arppayload[0] != CHANNEL_ID:
             return
-        extra_data = arppayload[1:].decode('utf-8', errors='ignore').strip('\x00')
-        if extra_data:
+        event_id = arppayload[1]
+        if last_event_id == event_id:
+            return
+        last_event_id = event_id
+        extra_data = arppayload[2:].decode('utf-8', errors='ignore').strip('\x00')
+        if len(extra_data) > 0:
             print(extra_data)
             send_websocket_message(extra_data)
 

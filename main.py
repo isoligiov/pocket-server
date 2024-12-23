@@ -1,5 +1,5 @@
 from scapy.all import sniff, ARP
-import websocket
+from websockets.sync.client import connect
 import ssl
 import rel
 import threading
@@ -36,41 +36,27 @@ def process_packet(packet):
             print(extra_data)
             send_websocket_message(extra_data)
 
-def on_error(ws, error):
-    print(error)
-
-def on_close(ws, close_status_code, close_msg):
-    print("### closed ###")
-
-def on_open(_ws):
-    global ws
-    print("Opened connection")
-    ws = _ws
 
 def sniff_thread():
     print("Starting packet capture on ARP...")
     sniff(filter="arp", prn=process_packet, store=0)
 
-def ws_thread():
-    global ws
-    while True:
-        ws = websocket.WebSocketApp(websocket_server_url,
-                                on_error=on_error,
-                                on_close=on_close,
-                                on_open=on_open)
-
-        ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE}, reconnect=5, ping_interval=10, ping_timeout=9)
-        time.sleep(3600 * 3)
-        ws.close()
-
 if __name__ == "__main__":
-    websocket.enableTrace(False)
-
-    ws_thread_handler = threading.Thread(target=ws_thread)
-    ws_thread_handler.start()
 
     sniff_handler = threading.Thread(target=sniff_thread)
     sniff_handler.start()
 
-    rel.signal(2, rel.abort)  # Keyboard Interrupt
-    rel.dispatch()
+    while True:
+        try:
+            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            ssl_context.check_hostname = False
+            ssl_context.verify_mode = ssl.CERT_NONE
+
+            with connect(websocket_server_url, ssl=ssl_context) as _ws:
+                ws = _ws
+                print('Opened connection')
+                while True:
+                    time.sleep(.1)
+        except Exception as e:
+            print('ERR', e)
+        time.sleep(10)

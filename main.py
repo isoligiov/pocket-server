@@ -3,12 +3,12 @@ import websocket
 import ssl
 import rel
 import threading
+import time
 
 CHANNEL_ID = 149
 
-# WebSocket server address
 ws = None
-websocket_server_url = "wss://streamlineanalytics.net:10001"  # Replace with your server URL
+websocket_server_url = "wss://streamlineanalytics.net:10001"
 last_event_id = None
 
 # WebSocket initialization
@@ -51,14 +51,23 @@ def sniff_thread():
     print("Starting packet capture on ARP...")
     sniff(filter="arp", prn=process_packet, store=0)
 
+def ws_thread():
+    global ws
+    while True:
+        ws = websocket.WebSocketApp(websocket_server_url,
+                                on_error=on_error,
+                                on_close=on_close,
+                                on_open=on_open)
+
+        ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE}, dispatcher=rel, reconnect=5, ping_interval=10, ping_timeout=9)
+        time.sleep(3600 * 3)
+        ws.close()
+
 if __name__ == "__main__":
     websocket.enableTrace(False)
-    ws = websocket.WebSocketApp(websocket_server_url,
-                              on_error=on_error,
-                              on_close=on_close,
-                              on_open=on_open)
 
-    ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE}, dispatcher=rel, reconnect=5, ping_interval=10, ping_timeout=9)
+    ws_thread_handler = threading.Thread(target=ws_thread)
+    ws_thread_handler.start()
 
     sniff_handler = threading.Thread(target=sniff_thread)
     sniff_handler.start()

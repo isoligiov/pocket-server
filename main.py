@@ -58,7 +58,7 @@ if __name__ == "__main__":
                               on_close=on_close,
                               on_open=on_open)
 
-    ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE}, dispatcher=rel, reconnect=5, ping_interval=10)
+    ws.run_forever(sslopt={"cert_reqs": ssl.CERT_NONE}, dispatcher=rel, reconnect=5, ping_interval=10, ping_timeout=9)
 
     sniff_handler = threading.Thread(target=sniff_thread)
     sniff_handler.start()

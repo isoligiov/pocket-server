@@ -22,6 +22,7 @@ def send_websocket_message(data):
 # Packet handler function
 def process_packet(packet):
     global last_event_id
+    print(packet)
     if ARP in packet and packet[ARP].op == 1:  # ARP request
         # Extract extra payload data
         arppayload = bytes(packet[ARP])[28:]  # Start after standard ARP payload

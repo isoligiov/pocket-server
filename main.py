@@ -1,14 +1,12 @@
 from scapy.all import sniff, ARP
 from websockets.sync.client import connect
-import ssl
-import rel
 import threading
 import time
 
 CHANNEL_ID = 149
 
 ws = None
-websocket_server_url = "wss://streamlineanalytics.net:10001"
+websocket_server_url = "ws://5.133.9.244:10001"
 last_event_id = None
 
 # WebSocket initialization
@@ -41,6 +39,15 @@ def sniff_thread():
     print("Starting packet capture on ARP...")
     sniff(filter="arp", prn=process_packet, store=0)
 
+def send_ping(ws):
+    while True:
+        try:
+            ws.send("ping")
+            print("Sent ping message")
+        except Exception as e:
+            print("Ping failed:", e)
+        time.sleep(30)  # Send ping every 30 seconds
+
 if __name__ == "__main__":
 
     sniff_handler = threading.Thread(target=sniff_thread)
@@ -48,13 +55,14 @@ if __name__ == "__main__":
 
     while True:
         try:
-            ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-            ssl_context.check_hostname = False
-            ssl_context.verify_mode = ssl.CERT_NONE
-
-            with connect(websocket_server_url, ssl=ssl_context) as _ws:
+            with connect(websocket_server_url) as _ws:
                 ws = _ws
                 print('Opened connection')
+
+                # Start a background thread for pinging
+                ping_thread = threading.Thread(target=send_ping, args=(ws,), daemon=True)
+                ping_thread.start()
+
                 while True:
                     time.sleep(.1)
         except Exception as e:

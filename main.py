@@ -8,6 +8,7 @@ CHANNEL_ID = 149
 ws = None
 websocket_server_url = "ws://5.133.9.244:10001"
 last_event_id = None
+stop_event = threading.Event()  # Event to signal stopping the main loop
 
 # WebSocket initialization
 def send_websocket_message(data):
@@ -40,12 +41,13 @@ def sniff_thread():
     sniff(filter="arp", prn=process_packet, store=0)
 
 def send_ping(ws):
-    while True:
+    while not stop_event.is_set():
         try:
             ws.send("ping")
             print("Sent ping message")
         except Exception as e:
             print("Ping failed:", e)
+            stop_event.set()  # Signal the main thread to stop
         time.sleep(30)  # Send ping every 30 seconds
 
 if __name__ == "__main__":
@@ -59,12 +61,15 @@ if __name__ == "__main__":
                 ws = _ws
                 print('Opened connection')
 
+                stop_event.clear()
                 # Start a background thread for pinging
                 ping_thread = threading.Thread(target=send_ping, args=(ws,), daemon=True)
                 ping_thread.start()
 
-                while True:
+                while not stop_event.is_set():
                     time.sleep(.1)
+                ws.close()
+                print('Closed connection')
         except Exception as e:
             print('ERR', e)
         time.sleep(10)
